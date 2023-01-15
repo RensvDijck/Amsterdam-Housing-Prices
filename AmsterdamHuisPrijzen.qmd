@@ -22,7 +22,7 @@ library(corrplot)
 library(caret)
 ```
 
-## Loading dataset
+## Loading data set
 
 ```{r}
 csv <- "C:/Users/Rens/Documents/R_projects/DataMinor/Indv project/HousingPrices-Amsterdam-August-2021.csv"
@@ -62,7 +62,7 @@ Removing the primary key in the data set because it is not needed.
 clean_df <- clean_df[,-1]
 ```
 
-## Graphs and plots
+## Graphs, maps and visualisations
 
 Scatter plot with on the Y-axis the Price of the houses, on the X-axis the area in m2, and the hue is dependent on the amount of rooms in the house.
 
@@ -117,7 +117,8 @@ ggplot(clean_df, aes(x = Lat, y = Price)) + geom_point() + ggtitle("Price vs Lat
 ggplot(clean_df, aes(x = Room, y = Price)) + geom_point() + ggtitle("Price vs Rooms")
 ggplot(clean_df, aes(x = Area, y = Price)) + geom_point() + ggtitle("Price vs Area")
 ggplot(clean_df, aes(x = Area, y = Room)) + geom_point() + ggtitle("Area vs Room")
-ggplot(clean_df, aes(x = Lon, y = Lat)) + geom_point() + ggtitle("Longitude vs Latitude")
+ggplot(clean_df, aes(x = Lon, y = Area)) + geom_point() + ggtitle("Longitude vs Area")
+ggplot(clean_df, aes(x = Lat, y = Area)) + geom_point() + ggtitle("Latitude vs Area")
 ```
 
 ## Data preparation for the model
@@ -137,16 +138,16 @@ corrplot(cor(model_df), method = "number", type = "lower")
 Here the outliers are removed from the variables Price and Area to have a better data set. A 98th quantile is used because it fit the data the best. This was not used in the end because it decreased the accuracy of the model.
 
 ```{r}
-model_df <- filter(model_df, Price < quantile(Price, 0.98))
-model_df <- filter(model_df, Area < quantile(Area, 0.98))
+#model_df <- filter(model_df, Price < quantile(Price, 0.98))
+#model_df <- filter(model_df, Area < quantile(Area, 0.98))
 #ggplot(model_df, aes(x = Area, y = Price)) + geom_point()
 ```
 
 Scaling the independant variables to improve the performance of the KNN model. This was not used in the end but it was used to test if the model performed better when using scaling on the independent variables.
 
 ```{r}
-model_df[, c("Area", "Room", "Lon", "Lat")] <- scale(model_df[, c("Area", "Room", "Lon", "Lat")])
-head(model_df)
+#model_df[, c("Area", "Room", "Lon", "Lat")] <- scale(model_df[, c("Area", "Room", "Lon", "Lat")])
+#head(model_df)
 ```
 
 ## Making the model
@@ -167,14 +168,14 @@ model_lm <- lm (Price ~ Area + Room + Lon + Lat, data = train_df)
 summary(model_lm)
 ```
 
+A prediction is made with the test data and then the prediction and the actual test set are plotted against each other.
+
 ```{r}
 predict <- predict(model_lm, newdata = test_df)
 results <- data.frame(actual = test_df$Price, predicted = predict)
 ggplot(results, aes(x = actual, y = predicted)) +
   geom_point() +
   geom_abline()
-#plot(test_df$Price, predict)
-#abline(lm(test_df$Price ~ predict))
 
 
 ```
@@ -186,44 +187,33 @@ RMSE(results[, "predicted"], results[, "actual"])
 ## Model to table
 
 ```{r}
-texreg::wordreg(list(model_lm), file="model1.doc")
+#texreg::wordreg(list(model_lm), file="model1.doc")
 ```
 
 ## KNN Model
 
 ```{r}
-set.seed(123)
-msplit <- createDataPartition(model_df[, "Price"], p = 0.7, list = FALSE)
-train_df <- model_df[msplit,]
-test_df <- model_df[-msplit,]
+#set.seed(123)
+#msplit <- createDataPartition(model_df[, "Price"], p = 0.7, list = FALSE)
+#train_df <- model_df[msplit,]
+#test_df <- model_df[-msplit,]
+
+#head(train_df)
+#head(test_df)
 ```
 
 ```{r}
-set.seed(123)
-msplit <- createDataPartition(model_df[, "Price"], p = 0.7, list = FALSE)
-train_df <- model_df[msplit, c("Area", "Room", "Lon", "Lat")]
-test_df <- model_df[-msplit, c("Area", "Room", "Lon", "Lat")]
-train_price <- model_df[msplit,"Price"]
-test_price <- as.factor(model_df[-msplit, "Price"])
-test_price <- factor(test_price, levels=levels(as.factor(train_price)))
+#knn_df <- knn(train = as.matrix(train_df[, c("Area", "Room", "Lon", "Lat")]), test = as.matrix(test_df[, c("Area", "Room", "Lon", "Lat")]), cl = train_df[, "Price"] , k = 32)
 
-
-head(train_df)
-head(test_price)
-```
-
-```{r}
-knn_df <- knn(train = as.matrix(train_df[, c("Area", "Room", "Lon", "Lat")]), test = as.matrix(test_df[, c("Area", "Room", "Lon", "Lat")]), cl = train_df[, "Price"] , k = 32)
-
-predict <- knn_df
+#predict <- knn_df
 
 ```
 
 ```{r}
 
-test_df[, "Price"] <- factor(test_df[, "Price"], levels=levels(as.factor(train_df[, "Price"])))
-confusion_matrix <- confusionMatrix(as.factor(predict), test_df[, "Price"])
-confusion_matrix
+#test_df[, "Price"] <- factor(test_df[, "Price"], levels=levels(as.factor(train_df[, "Price"])))
+#confusion_matrix <- confusionMatrix(as.factor(predict), test_df[, "Price"])
+#confusion_matrix
 
 #table(predict)
 #table(test_price)
